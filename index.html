@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>你的本命城市，藏着你没说出口的需求</title>
+<style>
+  :root{
+    --bg:#f5f0ea;
+    --card:#fffdfa;
+    --ink:#3d352e;
+    --ink-soft:#6f655b;
+    --line:#e7dcd0;
+    --accent:#b67b5e;
+    --accent-strong:#9f6549;
+    --accent-soft:#f2e1d6;
+    --sage:#6e7c64;
+    --radius:18px;
+    --radius-lg:22px;
+  }
+  *{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    -webkit-tap-highlight-color:transparent;
+  }
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.65;
+    display:flex;
+    justify-content:center;
+    min-height:100vh;
+    min-height:100dvh;
+  }
+  .wrap{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    min-height:100dvh;
+    padding:24px 20px 28px;
+    display:flex;
+    flex-direction:column;
+  }
+  .view{
+    display:none;
+    flex:1;
+    flex-direction:column;
+    min-height:0;
+  }
+  .view.active{display:flex;}
+
+  /* 开始页 */
+  .start{
+    justify-content:space-between;
+    gap:18px;
+  }
+  .start-main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:20px;
+    padding:12px 0 4px;
+  }
+  .eyebrow{
+    font-size:13px;
+    letter-spacing:2px;
+    color:var(--accent-strong);
+    text-align:center;
+  }
+  .start h1{
+    font-size:27px;
+    line-height:1.45;
+    font-weight:700;
+    text-align:center;
+    color:var(--ink);
+  }
+  .start .sub{
+    font-size:15px;
+    color:var(--ink-soft);
+    text-align:center;
+    line-height:1.75;
+  }
+  .note{
+    font-size:13px;
+    color:var(--ink-soft);
+    text-align:center;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    line-height:1.7;
+  }
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    min-height:52px;
+    border:none;
+    cursor:pointer;
+    background:var(--accent);
+    color:#fff;
+    font-family:inherit;
+    font-size:17px;
+    font-weight:600;
+    letter-spacing:.5px;
+    padding:14px 16px;
+    border-radius:16px;
+    box-shadow:0 6px 18px rgba(182,123,94,.18);
+    transition:background .15s ease,transform .1s ease,opacity .15s ease;
+  }
+  .btn:active{transform:scale(.99);}
+  .btn.secondary{
+    background:var(--card);
+    color:var(--ink);
+    border:1px solid var(--line);
+    box-shadow:none;
+    font-weight:500;
+  }
+  .btn:disabled{
+    cursor:default;
+    opacity:.6;
+  }
+  .disclaimer{
+    margin-top:auto;
+    padding-top:18px;
+    font-size:12px;
+    color:var(--ink-soft);
+    text-align:center;
+    line-height:1.6;
+  }
+
+  /* 答题页 */
+  .quiz-head{margin-bottom:18px;}
+  .progress{
+    height:8px;
+    background:var(--line);
+    border-radius:99px;
+    overflow:hidden;
+  }
+  .progress-bar{
+    height:100%;
+    width:0;
+    background:var(--accent);
+    border-radius:99px;
+    transition:width .25s ease;
+  }
+  .quiz-meta{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-top:10px;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .question{
+    font-size:20px;
+    font-weight:600;
+    line-height:1.5;
+    margin:8px 0 22px;
+  }
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .option{
+    text-align:left;
+    width:100%;
+    min-height:56px;
+    cursor:pointer;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:15px 17px;
+    font-family:inherit;
+    font-size:16px;
+    color:var(--ink);
+    line-height:1.55;
+    transition:background .15s ease,border-color .15s ease,transform .1s ease,opacity .15s ease;
+  }
+  .option:active{
+    background:var(--accent-soft);
+    border-color:var(--accent);
+  }
+  .option.picked{
+    background:var(--accent-soft);
+    border-color:var(--accent);
+  }
+  .option:disabled{
+    cursor:default;
+    opacity:.85;
+  }
+  
+  /* 上一题按钮区 */
+  .quiz-footer{
+    margin-top:24px;
+    display:flex;
+    justify-content:flex-start;
+  }
+  .btn-prev{
+    display:none;
+    width:auto;
+    min-height:44px;
+    padding:0 20px;
+    font-size:15px;
+    border-radius:12px;
+  }
+  .btn-prev.visible{
+    display:inline-flex;
+  }
+
+  /* 结果页 */
+  .result-hero{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius-lg);
+    padding:20px;
+    margin-bottom:12px;
+  }
+  .result-tag{
+    display:inline-block;
+    font-size:12px;
+    letter-spacing:1px;
+    color:var(--accent-strong);
+    background:var(--accent-soft);
+    padding:5px 11px;
+    border-radius:99px;
+    line-height:1.4;
+  }
+  .result-name{
+    font-size:26px;
+    font-weight:700;
+    line-height:1.35;
+    margin:10px 0 8px;
+    color:var(--ink);
+  }
+  .result-keyword{
+    font-size:15px;
+    color:var(--sage);
+    font-weight:600;
+    line-height:1.5;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px;
+    margin-bottom:12px;
+  }
+  .card h3{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+    font-weight:600;
+    letter-spacing:.02em;
+  }
+  .card p{
+    font-size:15px;
+    line-height:1.75;
+    color:var(--ink);
+  }
+  .tips{
+    list-style:none;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .tips li{
+    font-size:15px;
+    line-height:1.7;
+    padding-left:20px;
+    position:relative;
+    color:var(--ink);
+  }
+  .tips li::before{
+    content:"";
+    position:absolute;
+    left:2px;
+    top:.65em;
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:var(--accent);
+  }
+  .cities{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .city{
+    font-size:13px;
+    background:var(--bg);
+    border:1px solid var(--line);
+    border-radius:99px;
+    padding:6px 12px;
+    color:var(--ink-soft);
+    line-height:1.5;
+  }
+  .city-note{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:9px;
+    line-height:1.6;
+  }
+  .share-box{
+    background:var(--bg);
+    border-style:dashed;
+  }
+  .share-text{
+    font-size:15px;
+    line-height:1.7;
+    margin:0 0 12px;
+    color:var(--ink);
+    user-select:all;
+    -webkit-user-select:all;
+    word-break:break-word;
+  }
+  #btn-restart{
+    margin:2px 0 12px;
+  }
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:88px;
+    transform:translateX(-50%) translateY(8px);
+    background:var(--ink);
+    color:#fff;
+    font-size:14px;
+    padding:10px 18px;
+    border-radius:99px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease,transform .2s ease;
+    z-index:20;
+    max-width:calc(100% - 40px);
+    text-align:center;
+    line-height:1.4;
+  }
+  .toast.show{
+    opacity:.94;
+    transform:translateX(-50%) translateY(0);
+  }
+
+  @media (max-width:360px){
+    .start h1{font-size:23px;}
+    .question{font-size:18px;}
+    .option{font-size:15px;padding:14px 15px;}
+    .result-name{font-size:23px;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{
+      transition:none !important;
+      animation:none !important;
+    }
+    .progress-bar{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== 视图：开始页 ===== -->
+  <section class="view start active" id="view-start">
+    <div class="start-main">
+      <div class="eyebrow">城市磁场小测试</div>
+      <h1>你以为你想去大理，<br>其实你需要的不是大理</h1>
+      <p class="sub">《你的本命城市，藏着你没说出口的需求》<br>16 道生活化选择题，约 2 分钟。</p>
+      <div class="note">
+        下面 16 道题都来自日常场景，凭第一感觉选就好。
+      </div>
+      <button class="btn" id="btn-start" type="button">开始测试</button>
+    </div>
+    <p class="disclaimer">仅供娱乐，结果均为模拟生成，不构成任何专业评估或诊断。</p>
+  </section>
+
+  <!-- ===== 视图：答题页 ===== -->
+  <section class="view" id="view-quiz">
+    <div class="quiz-head">
+      <div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
+      <div class="quiz-meta">
+        <span id="quiz-count">第 1 / 16 题</span>
+        <span>凭第一感觉选择</span>
+      </div>
+    </div>
+    <h2 class="question" id="question-text"></h2>
+    <div class="options" id="options"></div>
+    
+    <!-- 上一题按钮 -->
+    <div class="quiz-footer">
+      <button class="btn secondary btn-prev" id="btn-prev" type="button">← 上一题</button>
+    </div>
+  </section>
+
+  <!-- ===== 视图：结果页 ===== -->
+  <section class="view" id="view-result">
+    <div class="result-hero">
+      <span class="result-tag">测试结果</span>
+      <div class="result-name" id="result-name"></div>
+      <div class="result-keyword" id="result-keyword"></div>
+    </div>
+
+    <div class="card">
+      <h3>你真正缺的是</h3>
+      <p id="result-miss"></p>
+    </div>
+
+    <div class="card">
+      <h3>你在这类城市里会活得最像自己</h3>
+      <p id="result-live"></p>
+    </div>
+
+    <div class="card">
+      <h3>给你的 3 条小建议</h3>
+      <ul class="tips" id="result-tips"></ul>
+    </div>
+
+    <div class="card">
+      <h3>气质相近的城市举例（仅作娱乐参考）</h3>
+      <div class="cities" id="result-cities"></div>
+      <p class="city-note">仅为气质相近的城市举例，仅作娱乐参考，不是定居建议。</p>
+    </div>
+
+    <div class="card share-box">
+      <h3>分享文案</h3>
+      <p class="share-text" id="result-share"></p>
+      <button class="btn secondary" id="btn-copy" type="button">复制分享文案</button>
+    </div>
+
+    <button class="btn secondary" id="btn-restart" type="button">重新测试</button>
+    <p class="disclaimer">仅供娱乐，结果均为模拟生成，不构成任何专业评估或诊断。</p>
+  </section>
+
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* 维度：A 烟火气 / B 秩序感 / C 野生感 / D 边界感 */
+  var QUESTIONS = [
+    {
+      q:"周末突然空出一整天，你最想怎么过？",
+      opts:[
+        {t:"绕到熟悉的菜市场逛一圈，顺路买把菜，晚上回家煲个汤", d:"A"},
+        {t:"把攒了一周的待办列成清单，按顺序一件件清掉，傍晚留出固定的运动时间", d:"B"},
+        {t:"没做计划，出门随便跳上一辆公交，走到哪算哪，撞见小店就进去看看", d:"C"},
+        {t:"拉上窗帘待在自己的房间里，看书听歌，不安排见面也不被打扰", d:"D"}
+      ]
+    },
+    {
+      q:"选住处时，你最在意下面哪一点？",
+      opts:[
+        {t:"楼下走路就能到菜场、早餐铺和熟面孔多的小店", d:"A"},
+        {t:"通勤路线稳定，周边配套规整，小区管理和公共服务清晰", d:"B"},
+        {t:"附近有老街区、摆摊和可以随便逛的角落，能不断发现新东西", d:"C"},
+        {t:"楼层安静、邻里往来少，回家就能关上门拥有自己的空间", d:"D"}
+      ]
+    },
+    {
+      q:"忙完一天下班，你通常靠什么把状态恢复过来？",
+      opts:[
+        {t:"约上常一起吃饭的朋友，找家小店边吃边聊，热热闹闹地放松", d:"A"},
+        {t:"按固定流程洗漱、整理第二天物品，在可预期的节奏里把状态收回来", d:"B"},
+        {t:"临时起意去探一家新店、看一场演出，用新鲜事把白天的累冲掉", d:"C"},
+        {t:"独自待着，不回消息不赴约，让社交压力慢慢退下去", d:"D"}
+      ]
+    },
+    {
+      q:"出门旅行，你更偏好哪种方式？",
+      opts:[
+        {t:"住进有生活气息的老城区，跟着当地人早市排队吃本地小吃", d:"A"},
+        {t:"行程提前排好，交通住宿都确认妥当，按节奏走完计划好的点", d:"B"},
+        {t:"留大片空白，走到感兴趣的巷子就钻进去，愿意为偶然发现的地方停留", d:"C"},
+        {t:"选安静、人少的住处，白天慢慢逛，不赶景点也不凑热闹", d:"D"}
+      ]
+    },
+    {
+      q:"一场社交结束回到家，你最想做什么？",
+      opts:[
+        {t:"回味刚才桌上的菜和聊天的片段，觉得心里被填得满满的", d:"A"},
+        {t:"尽快回到自己的固定作息，把社交占用的时间补回可控的轨道", d:"B"},
+        {t:"意犹未尽，想顺路再去一个没去过的地方接着走走", d:"C"},
+        {t:"立刻回到独处状态，安静下来，不再和任何人说话", d:"D"}
+      ]
+    },
+    {
+      q:"日常买东西，你更常去哪一类地方？",
+      opts:[
+        {t:"街边菜摊和夫妻店，老板能打招呼，讲价也有来有回", d:"A"},
+        {t:"品类齐全、流程清楚的连锁超市或商场，一次买齐不用绕路", d:"B"},
+        {t:"藏在巷子里的旧货店、市集和小摊，常能淘到意料之外的东西", d:"C"},
+        {t:"人少、动线简单的便利店，买完就走，不跟人寒暄", d:"D"}
+      ]
+    },
+    {
+      q:"如果想换个城市生活，你最想摆脱的是什么？",
+      opts:[
+        {t:"周围没人搭话、日子像外卖一样寡淡的孤立感", d:"A"},
+        {t:"规则模糊、通勤混乱、什么都要靠运气碰的不稳定感", d:"B"},
+        {t:"被一眼望到头、早就被定义好的生活节奏困住的窒息感", d:"C"},
+        {t:"人情往来太密、处处要顾及别人眼光的拥挤感", d:"D"}
+      ]
+    },
+    {
+      q:"关于工作节奏，你更舒服的状态是？",
+      opts:[
+        {t:"节奏有人情味，忙完大家一起吃顿饭，互相照应着往前走", d:"A"},
+        {t:"任务分工和时间节点清楚，流程可预期，努力和结果能对应上", d:"B"},
+        {t:"阶段之间有弹性，允许尝试新方向，做错了也有调整空间", d:"C"},
+        {t:"职责范围清楚，下班之后工作不再找上门，个人时间不被侵占", d:"D"}
+      ]
+    },
+    {
+      q:"朋友聚会，你更倾向哪种安排？",
+      opts:[
+        {t:"围坐在一家常去的小馆子，边吃边聊很久不散", d:"A"},
+        {t:"时间地点提前定好，人数和流程清楚，结束后各回各家", d:"B"},
+        {t:"临时凑局，换着不同的地方和新鲜面孔一起玩", d:"C"},
+        {t:"小范围、低强度，坐坐就走，不必长时间待在人堆里", d:"D"}
+      ]
+    },
+    {
+      q:"关于独处空间，下面哪种说法更像你？",
+      opts:[
+        {t:"哪怕在家，也喜欢厨房有响动、窗外有人声，生活是有温度的", d:"A"},
+        {t:"房间收纳整齐、动线固定，独处时一切都在自己的安排里", d:"B"},
+        {t:"独处时也想捣鼓点没试过的事，动手改造或学个新玩意儿", d:"C"},
+        {t:"独处就是不被打扰，电话和串门都越少越好", d:"D"}
+      ]
+    },
+    {
+      q:"面对一段没排计划的空档，你会？",
+      opts:[
+        {t:"约上熟人一起去吃点什么，顺便看看附近有没有新开的铺子", d:"A"},
+        {t:"提前想好这段时间用来做什么，避免事情堆到最后手忙脚乱", d:"B"},
+        {t:"索性不安排，看看心情和偶遇会把自己带到哪里", d:"C"},
+        {t:"留着这段时间一个人待着，不被任何人的行程安排绑住", d:"D"}
+      ]
+    },
+    {
+      q:"走在一条热闹的街道上，你的第一感受通常是？",
+      opts:[
+        {t:"人声、叫卖和热腾腾的日常让我觉得踏实，愿意挤进去逛", d:"A"},
+        {t:"热闹可以有，但街区规划清楚、规整有序才待得住", d:"B"},
+        {t:"越热闹越能发现故事，人多的角落往往藏着有意思的人和事", d:"C"},
+        {t:"人一多就想尽快离开，密集的人群让我觉得疲惫和被挤压", d:"D"}
+      ]
+    },
+    {
+      q:"对于规则和排队，你的态度更接近？",
+      opts:[
+        {t:"排队时跟前后聊两句也无妨，规矩之外留点人情余地更好", d:"A"},
+        {t:"规则明确、按顺序来最省心，大家守规矩就少很多摩擦", d:"B"},
+        {t:"规则太死会捆住手脚，偶尔想绕开流程试试别的可能性", d:"C"},
+        {t:"规则清晰能减少被打扰，但我更希望不必长时间跟陌生人待在一起", d:"D"}
+      ]
+    },
+    {
+      q:"面对一条完全陌生的街区，你的探索欲是？",
+      opts:[
+        {t:"喜欢跟着本地人的脚步，逛有生活气息的居民区", d:"A"},
+        {t:"先看地图和攻略，按推荐路线走，不贸然钻进没把握的地方", d:"B"},
+        {t:"越没去过越想钻进去看看，迷路也算一种收获", d:"C"},
+        {t:"只去安静、人少的地方，陌生街区太吵就不往深里走", d:"D"}
+      ]
+    },
+    {
+      q:"和邻居、陌生人保持怎样的距离，你更自在？",
+      opts:[
+        {t:"见面点头、偶尔搭把手，这种热络让人觉得住在这儿有人情味", d:"A"},
+        {t:"邻里往来按规矩来，客气而清晰，彼此心里有数", d:"B"},
+        {t:"愿意跟路上碰到的人多聊几句，说不定能聊出一段新体验", d:"C"},
+        {t:"最好互不打扰，打个招呼就够，不要有后续往来", d:"D"}
+      ]
+    },
+    {
+      q:"最近这段时间，你觉得最累的来源更接近哪一种？",
+      opts:[
+        {t:"日子过得太冷清，缺少热饭热菜和有人惦记的日常联结", d:"A"},
+        {t:"事情总在计划外变动，节奏失控、个人空间被一再打乱", d:"B"},
+        {t:"生活太按部就班，重复到感觉不到新鲜和成长的冲劲", d:"C"},
+        {t:"社交和人情太密，长期没有属于自己的安静空间", d:"D"}
+      ]
+    }
+  ];
+
+  /*
+    固定排列打乱每题选项顺序，确保每题 A/B/C/D 各一次，且不呈现原始 A/B/C/D 顺序。
+    原数据每题 opts 顺序为 A/B/C/D，以下排列分别对应不同顺序。
+  */
+  var ORDERS = [
+    [2,0,3,1],
+    [1,3,0,2],
+    [3,1,2,0],
+    [0,2,1,3]
+  ];
+  QUESTIONS.forEach(function(q, i){
+    var order = ORDERS[i % ORDERS.length];
+    q.opts = [q.opts[order[0]], q.opts[order[1]], q.opts[order[2]], q.opts[order[3]]];
+  });
+
+  var RESULTS = {
+    A:{
+      name:"你的城市磁场：烟火气",
+      keyword:"被日常接住的温暖",
+      miss:"你缺的是“被日常接住”的感觉。你不是缺一顿大餐，而是缺那种走路就能买菜、转角有人打招呼、晚上回来有一口热汤的踏实。日子被效率切得太碎之后，你其实渴望回到有温度、有往来、有人记得你的生活里。",
+      live:"在烟火升腾、熟人社会一样的街区里，你会慢慢松下来，变回那个愿意慢慢生活的人。",
+      tips:[
+        "固定一两家常去的小店或菜市场，每周留出时间去走动，跟老板混个脸熟。",
+        "把饭局固定下来：和朋友或家人约定每周一顿一起吃的饭，不让生活全交给外卖和效率。",
+        "给日常留一点慢动作，比如傍晚散步、买点当季食材，别把每一分钟都安排成任务。"
+      ],
+      cities:["成都","长沙","重庆","西安"],
+      share:"我的城市磁场是烟火气：我缺的不是大餐，是被日常接住的热乎劲儿。你呢？"
+    },
+    B:{
+      name:"你的城市磁场：秩序感",
+      keyword:"可预测的稳定与清晰分寸",
+      miss:"你缺的是“可预测和清晰分寸”。你被计划外的变动、模糊的规则和说不清的往来消耗着，真正需要的是规则清晰、通勤可控、空间整洁、努力有回响的环境。有序不是无趣，而是让你不用一直紧绷着应对意外。",
+      live:"在规划清楚、运转有序的城市里，你能把精力留给真正重要的事，活得从容而笃定。",
+      tips:[
+        "给自己定一份固定日程：起床、通勤、工作、休息的时间尽量稳定，减少临时打乱节奏的事。",
+        "明确工作与休息的分寸，下班之后不再承接额外事项，学会把待办留在工作时间内。",
+        "选择公共服务、交通配套稳定的区域居住，减少每天都要靠运气解决的生活琐事。"
+      ],
+      cities:["上海","苏州","杭州","东京"],
+      share:"我的城市磁场是秩序感：我缺的不是热闹，是可预测的生活。你呢？"
+    },
+    C:{
+      name:"你的城市磁场：野生感",
+      keyword:"不确定里长出来的生命力",
+      miss:"你缺的是“不确定带来的生命力”。你被过早写好的人生模板和一眼望到头的节奏困住，需要能探索、能试错、不被急着定义的环境。新鲜感和允许失败的空间，比一份表面安稳更能让你恢复活力。",
+      live:"在街巷交错、可能性很多的地方，你会重新冒出好奇心和试错的勇气，活得舒展又鲜活。",
+      tips:[
+        "每周留出一段没有计划的时间，不排日程，允许自己临时决定去做点新鲜事。",
+        "用小规模试错代替重大赌注：先尝试一个新方向的小项目，跑通了再投入更多。",
+        "定期反问自己是不是在用稳定换掉全部好奇心，别让重复把探索欲磨没。"
+      ],
+      cities:["大理","深圳","清迈","柏林"],
+      share:"我的城市磁场是野生感：我缺的不是安稳，是一点不确定里的生命力。你呢？"
+    },
+    D:{
+      name:"你的城市磁场：边界感",
+      keyword:"不被打扰的体面距离",
+      miss:"你缺的是“不被打扰的体面距离”。你长期处在偏高的社交密度和人情压力里，真正需要的是安静、低社交负担、个人空间被尊重的环境。独处不是孤僻，而是你给自己充电、保持体面和节奏的方式。",
+      live:"在人和人之间留有合适距离的地方，你不用勉强自己应酬，可以安静地按自己的方式生活。",
+      tips:[
+        "优先选择社交密度低、通勤短的住处，减少每天被迫面对的人际往来。",
+        "练习温和而明确地拒绝，不必为了维持关系承接超出自己精力的邀约。",
+        "在家里保留一块完全属于自己的独处空间，不安排访客，也不被随时打扰。"
+      ],
+      cities:["上海","深圳","北欧城市","京都"],
+      share:"我的城市磁场是边界感：我缺的不是人脉，是不被打扰的体面距离。你呢？"
+    }
+  };
+
+  /* 并列时的兜底顺序：边界感 → 秩序感 → 野生感 → 烟火气 */
+  var FALLBACK = ["D","B","C","A"];
+
+  var state = {
+    index:0,
+    scores:{A:0,B:0,C:0,D:0},
+    answers:[]
+  };
+  var locked = false;
+  var toastTimer = null;
+
+  var el = {
+    start:document.getElementById("view-start"),
+    quiz:document.getElementById("view-quiz"),
+    result:document.getElementById("view-result"),
+    bar:document.getElementById("progress-bar"),
+    count:document.getElementById("quiz-count"),
+    question:document.getElementById("question-text"),
+    options:document.getElementById("options"),
+    toast:document.getElementById("toast")
+  };
+
+  function resetState(){
+    state = {
+      index:0,
+      scores:{A:0,B:0,C:0,D:0},
+      answers:[]
+    };
+    locked = false;
+  }
+
+  function showView(name){
+    el.start.classList.remove("active");
+    el.quiz.classList.remove("active");
+    el.result.classList.remove("active");
+    el[name].classList.add("active");
+    window.scrollTo(0,0);
+  }
+
+  function renderQuestion(){
+    var data = QUESTIONS[state.index];
+    var total = QUESTIONS.length;
+    el.count.textContent = "第 " + (state.index + 1) + " / " + total + " 题";
+    el.bar.style.width = ((state.index) / total * 100) + "%";
+    el.question.textContent = data.q;
+
+    // 控制“上一题”按钮的显示与隐藏
+    var prevBtn = document.getElementById("btn-prev");
+    if (state.index > 0) {
+      prevBtn.classList.add("visible");
+    } else {
+      prevBtn.classList.remove("visible");
+    }
+
+    el.options.innerHTML = "";
+    
+    // 获取当前题目是否已有选中的答案（用于返回时回显）
+    var selectedDim = state.answers[state.index];
+
+    data.opts.forEach(function(opt){
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "option";
+      
+      // 如果回退时这个选项曾经被选过，恢复高亮状态
+      if (selectedDim && opt.d === selectedDim) {
+        btn.classList.add("picked");
+      }
+
+      btn.textContent = opt.t;
+      btn.addEventListener("click", function(){
+        choose(opt.d, btn);
+      });
+      el.options.appendChild(btn);
+    });
+  }
+
+  function choose(dim, btn){
+    if(locked){ return; }
+    locked = true;
+
+    btn.classList.add("picked");
+    var allButtons = el.options.querySelectorAll("button");
+    for(var i=0;i<allButtons.length;i++){
+      allButtons[i].disabled = true;
+    }
+
+    state.scores[dim] += 1;
+    state.answers.push(dim);
+    state.index += 1;
+
+    setTimeout(function(){
+      locked = false;
+      if(state.index >= QUESTIONS.length){
+        showResult();
+      }else{
+        renderQuestion();
+      }
+    }, 180);
+  }
+
+  /* 返回上一题逻辑 */
+  function goBack(){
+    if (state.index === 0 || locked) { return; }
+    
+    // 撤销上一题的得分并清除记录
+    var lastDim = state.answers.pop();
+    if (lastDim && state.scores[lastDim] > 0) {
+      state.scores[lastDim] -= 1;
+    }
+    
+    state.index -= 1;
+    renderQuestion();
+  }
+
+  function decideResult(){
+    var s = state.scores;
+    var max = Math.max(s.A, s.B, s.C, s.D);
+    var tied = ["A","B","C","D"].filter(function(k){
+      return s[k] === max;
+    });
+
+    if(tied.length === 1){ return tied[0]; }
+
+    var last = state.answers[state.answers.length - 1];
+    if(tied.indexOf(last) !== -1){ return last; }
+
+    for(var i=0;i<FALLBACK.length;i++){
+      if(tied.indexOf(FALLBACK[i]) !== -1){
+        return FALLBACK[i];
+      }
+    }
+    return tied[0];
+  }
+
+  function showResult(){
+    var key = decideResult();
+    var r = RESULTS[key];
+    el.bar.style.width = "100%";
+
+    document.getElementById("result-name").textContent = r.name;
+    document.getElementById("result-keyword").textContent = r.keyword;
+    document.getElementById("result-miss").textContent = r.miss;
+    document.getElementById("result-live").textContent = r.live;
+
+    var tipsBox = document.getElementById("result-tips");
+    tipsBox.innerHTML = "";
+    r.tips.forEach(function(t){
+      var li = document.createElement("li");
+      li.textContent = t;
+      tipsBox.appendChild(li);
+    });
+
+    var cityBox = document.getElementById("result-cities");
+    cityBox.innerHTML = "";
+    r.cities.forEach(function(c){
+      var span = document.createElement("span");
+      span.className = "city";
+      span.textContent = c;
+      cityBox.appendChild(span);
+    });
+
+    document.getElementById("result-share").textContent = r.share;
+    showView("result");
+  }
+
+  function restart(){
+    resetState();
+    el.bar.style.width = "0%";
+    el.count.textContent = "第 1 / 16 题";
+    el.question.textContent = "";
+    el.options.innerHTML = "";
+    el.toast.classList.remove("show");
+    showView("start");
+  }
+
+  function showToast(msg){
+    if(toastTimer){ clearTimeout(toastTimer); }
+    el.toast.textContent = msg;
+    el.toast.classList.add("show");
+    toastTimer = setTimeout(function(){
+      el.toast.classList.remove("show");
+    }, 1600);
+  }
+
+  function copyShare(){
+    var text = document.getElementById("result-share").textContent;
+
+    function fallbackCopy(){
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly","");
+      ta.style.position = "fixed";
+      ta.style.top = "0";
+      ta.style.left = "-9999px";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, ta.value.length);
+
+      var ok = false;
+      try{
+        ok = document.execCommand("copy");
+      }catch(e){
+        ok = false;
+      }
+      document.body.removeChild(ta);
+
+      if(ok){
+        showToast("已复制");
+      }else{
+        showToast("复制失败，请长按文案手动复制");
+      }
+    }
+
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){
+        showToast("已复制");
+      }, fallbackCopy);
+    }else{
+      fallbackCopy();
+    }
+  }
+
+  document.getElementById("btn-start").addEventListener("click", function(){
+    resetState();
+    renderQuestion();
+    showView("quiz");
+  });
+
+  document.getElementById("btn-prev").addEventListener("click", goBack);
+  document.getElementById("btn-restart").addEventListener("click", restart);
+  document.getElementById("btn-copy").addEventListener("click", copyShare);
+
+})();
+</script>
+</body>
+</html>
